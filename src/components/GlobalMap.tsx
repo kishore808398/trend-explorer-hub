@@ -66,10 +66,10 @@ const GlobalMap = ({ data, selectedKeyword }: GlobalMapProps) => {
     <div className="chart-container p-6 animate-scale-in">
       <div className="mb-4">
         <h3 className="text-xl font-semibold text-foreground mb-2">
-          Global Interest: "{selectedKeyword}"
+          Global Interest Map
         </h3>
         <p className="text-muted-foreground">
-          Hover over countries to see interest scores
+          Interactive world map showing regional search popularity for "<span className="font-medium text-foreground">{selectedKeyword}</span>". Darker regions indicate higher search interest. Hover over countries to see exact values.
         </p>
       </div>
 

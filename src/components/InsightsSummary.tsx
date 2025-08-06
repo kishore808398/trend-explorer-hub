@@ -58,7 +58,7 @@ const InsightsSummary = ({ insights, keywords }: InsightsSummaryProps) => {
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-foreground mb-2">Smart Insights</h3>
         <p className="text-muted-foreground">
-          Automated analysis of your search trends data
+          Automatically generated analytics showing peak interest periods, trending keywords, and overall search patterns for: <span className="font-medium text-foreground">{keywords.join(", ")}</span>
         </p>
       </div>
 

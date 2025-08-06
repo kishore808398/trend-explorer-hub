@@ -14,6 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Bar, Pie, Radar } from "react-chartjs-2";
+import ChartLegend from "./ChartLegend";
 
 ChartJS.register(
   CategoryScale,
@@ -44,9 +45,10 @@ interface TrendsChartProps {
   data: TrendsData | null;
   chartType: string;
   loading: boolean;
+  keywords?: string[];
 }
 
-const TrendsChart = ({ data, chartType, loading }: TrendsChartProps) => {
+const TrendsChart = ({ data, chartType, loading, keywords = [] }: TrendsChartProps) => {
   const chartRef = useRef<any>(null);
 
   const chartColors = [
@@ -208,11 +210,52 @@ const TrendsChart = ({ data, chartType, loading }: TrendsChartProps) => {
     );
   }
 
+  const getChartTitle = () => {
+    switch (chartType) {
+      case "line":
+        return "Search Interest Over Time";
+      case "bar":
+        return "Search Volume Comparison";
+      case "pie":
+        return "Keyword Share Distribution";
+      case "radar":
+        return "Multi-dimensional Trend Analysis";
+      default:
+        return "Search Trends";
+    }
+  };
+
+  const getChartDescription = () => {
+    switch (chartType) {
+      case "line":
+        return "Shows how search interest changes over time for each keyword";
+      case "bar":
+        return "Compares search volumes across different time periods";
+      case "pie":
+        return "Shows the relative popularity of each keyword as a percentage";
+      case "radar":
+        return "Displays multiple data points in a radar/spider web format";
+      default:
+        return "Visualizes search trend data";
+    }
+  };
+
   return (
     <div className="chart-container p-6 animate-scale-in">
+      <div className="mb-4">
+        <h3 className="text-xl font-semibold text-foreground mb-2">
+          {getChartTitle()}
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {getChartDescription()}
+        </p>
+      </div>
       <div className="h-96">
         {renderChart()}
       </div>
+      {data && keywords.length > 0 && (
+        <ChartLegend keywords={keywords} chartType={chartType} />
+      )}
     </div>
   );
 };

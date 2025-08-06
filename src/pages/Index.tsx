@@ -71,6 +71,7 @@ const Index = () => {
               data={trendsData}
               chartType={chartType}
               loading={loading}
+              keywords={keywords}
             />
           </div>
           
