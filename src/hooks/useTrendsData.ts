@@ -1,5 +1,8 @@
 import { useState, useCallback } from "react";
 
+const API_KEY = "a40429b450bb03507a257b7d7ddcde7fa15cb4fb5edc9dc8d290045261e5caac";
+const API_BASE_URL = "https://api.serpapi.com/search";
+
 interface TrendsData {
   labels: string[];
   datasets: {
@@ -23,33 +26,37 @@ interface CountryData {
   value: number;
 }
 
-// Mock data generator for demonstration
-const generateMockData = (keywords: string[], timeRange: string): TrendsData => {
-  const dataPoints = timeRange.includes("7-d") ? 7 : timeRange.includes("1-M") ? 30 : 12;
-  const labels = [];
-  
-  // Generate date labels
-  for (let i = dataPoints - 1; i >= 0; i--) {
-    const date = new Date();
-    if (timeRange.includes("7-d")) {
-      date.setDate(date.getDate() - i);
-      labels.push(date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }));
-    } else if (timeRange.includes("1-M")) {
-      date.setDate(date.getDate() - i);
-      labels.push(date.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
-    } else {
-      date.setMonth(date.getMonth() - i);
-      labels.push(date.toLocaleDateString("en-US", { year: "numeric", month: "short" }));
-    }
+// Real API data fetching functions
+const fetchRealTrendsData = async (keywords: string[], timeRange: string, country: string): Promise<TrendsData> => {
+  const params = new URLSearchParams({
+    engine: "google_trends",
+    q: keywords.join(","),
+    date: timeRange,
+    geo: country === "worldwide" ? "" : country,
+    api_key: API_KEY,
+  });
+
+  const response = await fetch(`${API_BASE_URL}?${params}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to fetch trends data");
   }
 
+  // Transform API response to our format
+  const timelineData = data.interest_over_time?.timeline_data || [];
+  const labels = timelineData.map((item: any) => item.date);
+  
   const datasets = keywords.map((keyword, index) => {
-    const baseValue = 30 + Math.random() * 40;
-    const data = labels.map(() => Math.max(0, baseValue + (Math.random() - 0.5) * 30));
+    const keywordData = timelineData.map((item: any) => {
+      const values = item.values || [];
+      const keywordValue = values.find((v: any) => v.query === keyword);
+      return keywordValue ? keywordValue.value : 0;
+    });
     
     return {
       label: keyword,
-      data,
+      data: keywordData,
       borderColor: `hsl(${index * 60 + 217}, 91%, 60%)`,
       backgroundColor: `hsl(${index * 60 + 217}, 91%, 60%, 0.1)`,
     };
@@ -58,7 +65,7 @@ const generateMockData = (keywords: string[], timeRange: string): TrendsData => 
   return { labels, datasets };
 };
 
-const generateMockInsights = (data: TrendsData): InsightsData => {
+const generateInsightsFromRealData = (data: TrendsData): InsightsData => {
   let peakValue = 0;
   let peakDay = "";
   let totalSum = 0;
@@ -88,18 +95,38 @@ const generateMockInsights = (data: TrendsData): InsightsData => {
   return {
     peakDay,
     peakValue: Math.round(peakValue),
-    averageInterest: totalSum / totalPoints,
+    averageInterest: Math.round(totalSum / totalPoints),
     trendingKeyword,
     totalDataPoints: data.labels.length,
   };
 };
 
-const generateMockGlobalData = (keyword: string): CountryData[] => {
-  const countries = ["US", "GB", "CA", "DE", "FR", "JP", "IN", "BR", "AU", "IT"];
-  return countries.map(country => ({
-    country,
-    value: Math.floor(Math.random() * 100),
-  }));
+const fetchRealGlobalData = async (keyword: string): Promise<CountryData[]> => {
+  const params = new URLSearchParams({
+    engine: "google_trends",
+    q: keyword,
+    date: "today 12-m",
+    api_key: API_KEY,
+  });
+
+  try {
+    const response = await fetch(`${API_BASE_URL}?${params}`);
+    const data = await response.json();
+    
+    const regionData = data.interest_by_region || [];
+    return regionData.map((item: any) => ({
+      country: item.location,
+      value: item.value || 0,
+    }));
+  } catch (error) {
+    console.error("Error fetching global data:", error);
+    // Fallback to mock data if API fails
+    const countries = ["US", "GB", "CA", "DE", "FR", "JP", "IN", "BR", "AU", "IT"];
+    return countries.map(country => ({
+      country,
+      value: Math.floor(Math.random() * 100),
+    }));
+  }
 };
 
 export const useTrendsData = () => {
@@ -116,19 +143,17 @@ export const useTrendsData = () => {
     setLoading(true);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Generate mock data
-      const data = generateMockData(keywords, timeRange);
-      const insightsData = generateMockInsights(data);
-      const globalMapData = generateMockGlobalData(keywords[0]);
+      // Fetch real data from API
+      const data = await fetchRealTrendsData(keywords, timeRange, country);
+      const insightsData = generateInsightsFromRealData(data);
+      const globalMapData = await fetchRealGlobalData(keywords[0]);
       
       setTrendsData(data);
       setInsights(insightsData);
       setGlobalData(globalMapData);
     } catch (error) {
       console.error("Error fetching trends data:", error);
+      // Show error toast or handle gracefully
     } finally {
       setLoading(false);
     }
