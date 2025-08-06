@@ -13,7 +13,7 @@ const Index = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [chartType, setChartType] = useState("line");
   const [timeRange, setTimeRange] = useState("now 3-M");
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState("worldwide");
   const [customDateRange, setCustomDateRange] = useState({
     start: "",
     end: "",

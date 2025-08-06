@@ -53,7 +53,7 @@ const ChartControls = ({
   ];
 
   const countryOptions = [
-    { value: "", label: "Worldwide" },
+    { value: "worldwide", label: "Worldwide" },
     { value: "US", label: "United States" },
     { value: "GB", label: "United Kingdom" },
     { value: "CA", label: "Canada" },
